@@ -22,8 +22,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-
-
 class Incident(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -38,17 +36,20 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    email = request.form['email']
-    password = request.form['password']
-    user = User.query.filter_by(email=email).first()
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = User.query.filter_by(email=email).first()
 
-    if user and check_password_hash(user.password, password):
-        session['user_id'] = user.id
-        flash('Login successful!', 'success')
-        return redirect(url_for('dashboard'))
+        if user and check_password_hash(user.password, password):
+            session['user_id'] = user.id
+            flash('Login successful!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid credentials. Please try again.', 'danger')
+            return redirect(url_for('home'))
     else:
-        flash('Invalid credentials. Please tr Hola y again.', 'danger')
-        return redirect(url_for('home'))
+        return render_template('login2.html')
 
 
 @app.route('/dashboard')
@@ -103,23 +104,26 @@ def register():
     return render_template('register.html')
 
 
-@app.route('/forgot_password', methods=['POST'])
+@app.route('/forgot_password', methods=["GET", 'POST'])
 def forgot_password():
-    email = request.form['email']
-    user = User.query.filter_by(email=email).first()
+    if request.method == "POST":
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
 
-    if user:
-        token = os.urandom(24).hex()
-        reset_url = url_for('reset_password', token=token, _external=True)
-        msg = Message('Password Reset Request', sender='your-email@gmail.com', recipients=[email])
-        msg.body = f'Click the link to reset your password: {reset_url}'
-        mail.send(msg)
+        if user:
+            token = os.urandom(24).hex()
+            reset_url = url_for('reset_password', token=token, _external=True)
+            msg = Message('Password Reset Request', sender='your-email@gmail.com', recipients=[email])
+            msg.body = f'Click the link to reset your password: {reset_url}'
+            mail.send(msg)
 
-        flash('Password reset link sent to your email.', 'info')
+            flash('Password reset link sent to your email.', 'info')
+        else:
+            flash('Email not found. Please register.', 'warning')
+
+        return redirect(url_for('home'))
     else:
-        flash('Email not found. Please register.', 'warning')
-
-    return redirect(url_for('home'))
+        return render_template("reset_password.html")
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
