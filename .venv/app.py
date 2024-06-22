@@ -90,18 +90,29 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if password != confirm_password:
+            flash('Passwords do not match!', 'danger')
+            return redirect(url_for('register'))
+
         hashed_password = generate_password_hash(password, method='sha256')
+        new_user = User(username=username, email=email, password=hashed_password)
 
-        new_user = User(email=email, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('home'))
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except:
+            flash('Email or Username already exists.', 'danger')
+            return redirect(url_for('register'))
 
     return render_template('register.html')
+
 
 
 @app.route('/forgot_password', methods=["GET", 'POST'])
@@ -123,20 +134,20 @@ def forgot_password():
 
         return redirect(url_for('home'))
     else:
-        return render_template("reset_password.html")
+        return render_template("forget_password.html")
 
 
-@app.route('/reset_password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
-    if request.method == 'POST':
-        new_password = request.form['password']
-        hashed_password = generate_password_hash(new_password, method='sha256')
-        # Here you need to map the token to the user and update the password
-        # This part requires a token-to-user mapping mechanism.
-        flash('Password reset successful! Please login.', 'success')
-        return redirect(url_for('home'))
-
-    return render_template('reset_password.html', token=token)
+# @app.route('/reset_password/<token>', methods=['GET', 'POST'])
+# def reset_password(token):
+#     if request.method == 'POST':
+#         new_password = request.form['password']
+#         hashed_password = generate_password_hash(new_password, method='sha256')
+#         # Here you need to map the token to the user and update the password
+#         # This part requires a token-to-user mapping mechanism.
+#         flash('Password reset successful! Please login.', 'success')
+#         return redirect(url_for('home'))
+#
+#     return render_template('reset_password.html', token=token)
 
 
 

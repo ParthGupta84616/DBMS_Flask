@@ -1,36 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register</title>
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block styles %}
   <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
-</head>
-<body>
+{% endblock %}
+{% block content %}
   <div class="wrapper">
-    <form action="#">
+    <form action="{{ url_for('register') }}" method="POST">
       <h2>Register</h2>
-         <div class="input-field">
-        <input type="text" required>
+      <div class="input-field">
+        <input type="text" name="username" required>
         <label>Enter your User Name</label>
       </div>
-        <div class="input-field">
-        <input type="text" required>
+      <div class="input-field">
+        <input type="email" name="email" required>
         <label>Enter your email</label>
       </div>
       <div class="input-field">
-        <input type="password" required>
+        <input type="password" name="password" required>
         <label>Enter your password</label>
       </div>
       <div class="input-field">
-        <input type="password" required>
+        <input type="password" name="confirm_password" required>
         <label>Confirm your password</label>
       </div>
       <button type="submit">Register</button>
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
       <div class="register">
-        <p>Already have an account? <a href="/login">login</a></p>
+        <p>Already have an account? <a href="{{ url_for('login') }}">login</a></p>
       </div>
+
     </form>
   </div>
-</body>
-</html>
+{% endblock %}
