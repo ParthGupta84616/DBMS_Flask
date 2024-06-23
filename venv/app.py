@@ -6,34 +6,42 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///incident_response.db'
+
+username = 'root'
+password = '1234'
+hostname = 'localhost'
+database_name = 'dbmsproject'
+
+# MySQL configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{username}:{password}@{hostname}/{database_name}'
+# Replace 'username', 'password', 'hostname', and 'database_name' with your MySQL credentials
+
+# Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'Your-Email'
-app.config['MAIL_PASSWORD'] = 'Your-password'
+app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
+app.config['MAIL_PASSWORD'] = 'your-email-password'
 
 db = SQLAlchemy(app)
 mail = Mail(app)
 
-
+# Define your models (User and Incident) as before
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username=db.Column(db.string(50),unique=True,nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
 class Incident(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), default='Reported')
 
-
 @app.route('/')
 def home():
     return render_template('index.html')
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -52,7 +60,6 @@ def login():
     else:
         return render_template('login2.html')
 
-
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -61,7 +68,6 @@ def dashboard():
 
     incidents = Incident.query.all()
     return render_template('dashboard.html', incidents=incidents)
-
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
@@ -80,13 +86,11 @@ def report():
 
     return render_template('report.html')
 
-
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     flash('Logged out successfully.', 'info')
     return redirect(url_for('home'))
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -114,8 +118,6 @@ def register():
 
     return render_template('register.html')
 
-
-
 @app.route('/forgot_password', methods=["GET", 'POST'])
 def forgot_password():
     if request.method == "POST":
@@ -137,20 +139,17 @@ def forgot_password():
     else:
         return render_template("forget_password.html")
 
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if request.method == 'POST':
+        new_password = request.form['password']
+        hashed_password = generate_password_hash(new_password, method='sha256')
+        # You need a way to map the token to the user and update the password
+        # This part requires a token-to-user mapping mechanism.
+        flash('Password reset successful! Please login.', 'success')
+        return redirect(url_for('home'))
 
-# @app.route('/reset_password/<token>', methods=['GET', 'POST'])
-# def reset_password(token):
-#     if request.method == 'POST':
-#         new_password = request.form['password']
-#         hashed_password = generate_password_hash(new_password, method='sha256')
-#         # Here you need to map the token to the user and update the password
-#         # This part requires a token-to-user mapping mechanism.
-#         flash('Password reset successful! Please login.', 'success')
-#         return redirect(url_for('home'))
-#
-#     return render_template('reset_password.html', token=token)
-
-
+    return render_template('reset_password.html', token=token)
 
 if __name__ == '__main__':
     with app.app_context():
